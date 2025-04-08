@@ -1,9 +1,11 @@
 const { Room, Booking } = require('./index');
 
-describe('Room Class', () => {
+describe('Tests', () => {
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
+  yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
   
   const testBooking = new Booking(
     "John Doe",
@@ -14,26 +16,47 @@ describe('Room Class', () => {
     null
   );
 
-  const testRoom = new Room(
-    "Deluxe Suite",
-    [testBooking],
-    10000,
-    5
+  const testBooking2 = new Booking(
+    "Jane Doe",
+    "jane@example.com",
+    yesterday,
+    today,
+    5,
+    null
   );
 
+  const testRoom = new Room(
+    "Deluxe Suite",
+    10000,
+    5,
+    [testBooking]
+  );
+
+  const testRoom2 = new Room(
+    "Suite",
+    20000,
+    10,
+    [testBooking2]
+  );
+
+
+  testBooking.room = testRoom; 
+  testBooking2.room = testRoom2;
+
   describe('isOccupied() method', () => {
-    test('Returns true if the room is occupied on the date', () => {
+    test('Devuelve true si la habitación está ocupada en la fecha.', () => {
+
       expect(testRoom.isOccupied(today)).toBe(true);
     });
 
-    test('Returns false if the room is not occupied on the date', () => {
+    test('Devuelve false si la habitación no está ocupada en la fecha.', () => {
       const pastDate = new Date(2020, 0, 1);
       expect(testRoom.isOccupied(pastDate)).toBe(false);
     });
   });
 
   describe('occupancyPercentage() method', () => {
-    test('Correctly calculates occupancy percentage', () => {
+    test('Calcula correctamente el porcentaje de ocupación.', () => {
       const startDate = new Date();
       startDate.setDate(today.getDate() - 1);
       const endDate = new Date();
@@ -44,56 +67,56 @@ describe('Room Class', () => {
   });
 
   describe('static totalOccupancyPercentage()', () => {
-    test('Calculates total occupancy across multiple rooms', () => {
-      const room1 = new Room("Room 1", [testBooking], 10000, 0);
-      const room2 = new Room("Room 2", [], 8000, 0);
-      const rooms = [room1, room2];
+    test('Calcula la ocupación total en varias habitaciones.', () => {
+      const startDate = new Date();
+      startDate.setDate(today.getDate() - 1);
+      const endDate = new Date();
+      endDate.setDate(today.getDate() + 1);
+      const rooms = [testRoom, testRoom2];
       
-      expect(Room.totalOccupancyPercentage(rooms, startDate, endDate)).toBe(25);
+      expect(Room.totalOccupancyPercentage(rooms, startDate, endDate)).toBe(50);
     });
   });
 
   describe('static availableRooms()', () => {
-    test('Returns only available rooms', () => {
-      const room1 = new Room("Room 1", [testBooking], 10000, 0);
-      const room2 = new Room("Room 2", [], 8000, 0);
-      const rooms = [room1, room2];
+    test('Devuelve solo habitaciones disponibles', () => {
+      
+      const rooms = [testRoom, testRoom2];
       
       const available = Room.availableRooms(rooms, today, tomorrow);
       expect(available.length).toBe(1);
-      expect(available[0].name).toBe("Room 2");
+      expect(available[0].name).toBe("Suite");
     });
   });
-});
 
-describe('Booking Class', () => {
   describe('fee getter', () => {
-    test('Correctly calculates fee with discounts', () => {
-      const room = new Room("Standard", [], 10000, 10); 
-      const booking = new Booking(
-        "Jane Smith",
-        "jane@example.com",
-        new Date(),
-        new Date(),
-        5, 
-        room
-      );
+    test('Calcula correctamente la tarifa con descuentos', () => {
+      const fee = testBooking.getFee()
       
-      expect(booking.fee).toBe(8550);
+      expect(fee).toBe(8500);
     });
 
-    test('Handles 0 discount correctly', () => {
-      const room = new Room("Standard", [], 10000, 0);
+    test('Maneja 0 descuentos correctamente', () => {
+      const roomWithoutDiscount = new Room(
+        "Standard Room",
+        10000,
+        0,
+        []
+      );
+
       const booking = new Booking(
         "No Discount",
         "test@example.com",
         new Date(),
-        new Date(),
+        tomorrow,
         0,
-        room
+        roomWithoutDiscount
       );
+
+      roomWithoutDiscount.bookings.push(booking);
+
       
-      expect(booking.fee).toBe(10000);
+      expect(booking.getFee()).toBe(10000);
     });
   });
 });
